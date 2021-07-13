@@ -1,0 +1,53 @@
+Cliente:
+    - Cadastrar usuário:
+        - nome
+        - telefone
+    - Registrar interesse (carona)
+        - origem
+        - destino
+        - data
+    - Registrar interesse (passageiros)
+        - origem
+        - destino
+        - data
+        - n passageiros
+    - Cancelar viagem
+    - Mensagem de notificação
+
+Servidor:  
+    - registrar interesse (carona)
+    - registrar interesse (passageiros)
+    - notificar
+    - cancelar viagem
+    - enviar notificações
+    
+    etapas:
+    - fazer programa sem criptografia nem pyro
+    - aplicar pyro
+    - aplicar criptografia
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
