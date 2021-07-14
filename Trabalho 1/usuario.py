@@ -1,16 +1,12 @@
 from servidor import Servidor
+import Pyro4
 
 class Usuario(object):
-    def __init__(self, servidor):
+    def __init__(self):
         self.nome = None
         self.telefone = None
         self.ids_pedidos = []
         self.ids_ofertas = []
-
-        #AUX
-        self.servidor = servidor
-
-        self.cadastrar_usuario()
 
 
     def get_variavel(self, nome):
@@ -32,11 +28,11 @@ class Usuario(object):
         self.nome = self.get_variavel("Nome")
         self.telefone = self.get_variavel("Telefone")
         
-        #Pyro4 - chave pública
-        self.servidor.cadastrar_usuario(self)
+        with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
+            servidor.cadastrar_usuario(self.nome, self)
 
 
-    def requerir_carona(self):
+    def requisitar_carona(self):
         while True:
             print("Escolha uma opção:\n( 1 ) - Pedir carona\n( 2 ) - Oferecer carona")
             opcao = input("Opção: ")
@@ -57,14 +53,16 @@ class Usuario(object):
         destino = self.get_variavel("Destino")
         data = self.get_variavel("Data")
 
-        #Pyro4 - chave pública
-        id_req = self.servidor.registrar_interesse_pedido(self.nome, 
-                                                          self.telefone, 
-                                                          origem, 
-                                                          destino, 
-                                                          data)
+        
+        with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
+            id_req = servidor.registrar_interesse_pedido(self.nome, 
+                                                         self.telefone, 
+                                                         origem, 
+                                                         destino, 
+                                                         data)
 
         self.ids_pedidos.append(id_req)
+        print(id_req)
 
     
     def registrar_oferta(self):
@@ -73,13 +71,13 @@ class Usuario(object):
         data = self.get_variavel("Data")
         n_passageiros = self.get_variavel("Número de Passageiros")
 
-        #Pyro4 - chave pública
-        id_req = self.servidor.registrar_interesse_oferta(self.nome, 
-                                                          self.telefone, 
-                                                          origem, 
-                                                          destino, 
-                                                          data,
-                                                          n_passageiros)
+        with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
+            id_req = servidor.registrar_interesse_oferta(self.nome, 
+                                                         self.telefone, 
+                                                         origem, 
+                                                         destino, 
+                                                         data,
+                                                         n_passageiros)
 
         self.ids_ofertas.append(id_req)
         
@@ -105,8 +103,9 @@ class Usuario(object):
     def cancelar_pedido(self, id_requisicao):
         id_req = int(id_requisicao)
         if id_req in self.ids_pedidos:
-            #Pyro4 - chave pública
-            self.servidor.cancelar_pedido(id_req)
+            with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
+                servidor.cancelar_pedido(id_req)
+
             self.ids_pedidos.remove(id_req)
         else:
             print("[ERRO] ID de registro de carona não existente!")
@@ -115,20 +114,25 @@ class Usuario(object):
     def cancelar_oferta(self, id_requisicao):
         id_req = int(id_requisicao)
         if id_req in self.ids_ofertas:
-            #Pyro4 - chave pública
-            self.servidor.cancelar_oferta(id_req)
+            with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
+                servidor.cancelar_oferta(id_req)
+
             self.ids_ofertas.remove(id_req)
         else:
             print("[ERRO] ID de registro de carona não existente!")
 
 
-    #Pyro4 
+    @Pyro4.expose
+    @Pyro4.callback
+    #trocar os argumentos por uma simples linha de texto
     def notificar_oferta(self, nome, telefone, origem, destino, data):
         print("[NOTIFICAÇÃO] O usuário {0} está interessado em te oferecer carona!".format(nome))
         print("""Informações:\nTelefone do usuário: {0}\nOrigem: {1}\nDestino: {2}\nData: {3}""".format(telefone, origem, destino, data))
 
 
-    #Pyro4 
+    @Pyro4.expose
+    @Pyro4.callback
+    #trocar os argumentos por uma simples linha de texto
     def notificar_pedido(self, nome, telefone, origem, destino, data):
         print("[NOTIFICAÇÃO] O usuário {0} está interessado em sua carona!".format(nome))
         print("""Informações:\nTelefone do usuário: {0}\nOrigem: {1}\nDestino: {2}\nData: {3}""".format(telefone, origem, destino, data))

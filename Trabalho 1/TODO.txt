@@ -26,6 +26,8 @@ Servidor:
     - fazer programa sem criptografia nem pyro
     - aplicar pyro
     - aplicar criptografia
+    - comentários
+    - try except
     
     
     

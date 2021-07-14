@@ -1,46 +1,69 @@
 from requisicao import Requisicao
+import Pyro4
+
+usuarios = []
+caronas_pedidas = []
+caronas_oferecidas = []
+cont = 0
+
 
 class Servidor(object):
     def __init__(self):
-        self.usuarios = []
-        self.caronas_pedidas = []
-        self.caronas_oferecidas = []
-        self.cont = 0
+        #criar nova classse para essas iunformações, guardá-las fora do servidor
+        self.j = 3
         
 
-    def cadastrar_usuario(self, usuario):
-        self.usuarios.append(usuario)
+    @Pyro4.expose
+    def cadastrar_usuario(self, nome, usuario):
+        novo = {"nome":nome, "referencia":usuario}
+        global usuarios
+        usuarios.append(novo)
+        print("[SUCESSO] Novo usuário registrado! Nome: {0}".format(nome))
 
 
+    @Pyro4.expose
     def registrar_interesse_pedido(self, nome, telefone, origem, destino, data):
-        self.cont += 1
-        requisicao = Requisicao(self.cont, nome, telefone, origem, destino, data)
-        self.caronas_pedidas.append(requisicao)
+        global cont
+        global caronas_pedidas
+        cont += 1
+        requisicao = Requisicao(cont, nome, telefone, origem, destino, data)
+        caronas_pedidas.append(requisicao)
         self.procurar_ofertas(requisicao)
-        return self.cont
+        print("[SUCESSO] Novo registro de interesse de pedido criado!")
+        return cont
 
 
+    @Pyro4.expose
     def registrar_interesse_oferta(self, nome, telefone, origem, destino, data, n_passageiros):
-        self.cont += 1
-        requisicao = Requisicao(self.cont, nome, telefone, origem, destino, data, n_passageiros)
-        self.caronas_oferecidas.append(requisicao)
+        global cont
+        global caronas_oferecidas
+        cont += 1
+        requisicao = Requisicao(cont, nome, telefone, origem, destino, data, n_passageiros)
+        caronas_oferecidas.append(requisicao)
         self.procurar_pedidos(requisicao)
-        return self.cont
+        print("[SUCESSO] Novo registro de interesse de oferta criado!")
+        return cont
 
 
+    @Pyro4.expose
     def cancelar_pedido(self, id_req):
-        for carona in self.caronas_pedidas:
+        global caronas_pedidas
+        for carona in caronas_pedidas:
             if carona.id_req == id_req:
-                self.caronas_pedidas.remove(carona)
+                caronas_pedidas.remove(carona)
+                print("[SUCESSO] Carona com ID: {0} cancelada".format(id_req))
                 return
         
         print("[ERRO] ID de registro de carona não encontrado!")
            
-                
+
+    @Pyro4.expose          
     def cancelar_oferta(self, id_req):
-        for carona in self.caronas_oferecidas:
+        global caronas_oferecidas
+        for carona in caronas_oferecidas:
             if carona.id_req == id_req:
-                self.caronas_oferecidas.remove(carona)
+                caronas_oferecidas.remove(carona)
+                print("[SUCESSO] Carona com ID: {0} cancelada".format(id_req))
                 return
         
         print("[ERRO] ID de registro de carona não encontrado!")
@@ -49,53 +72,65 @@ class Servidor(object):
     def procurar_pedidos(self, oferta):
         usr_o = self.get_usuario(oferta.nome)
         usr_p = None
+        global caronas_pedidas
 
-        for pedido in self.caronas_pedidas:
+        for pedido in caronas_pedidas:
             if(pedido.origem == oferta.origem and
                pedido.destino == oferta.destino and
                pedido.data == oferta.data):
 
                 usr_p = self.get_usuario(pedido.nome)
-
-                usr_o.notificar_pedido(pedido.nome, 
-                                       pedido.telefone, 
-                                       pedido.origem, 
-                                       pedido.destino, 
-                                       pedido.data)
-
-                usr_p.notificar_oferta(oferta.nome, 
-                                       oferta.telefone, 
-                                       oferta.origem, 
-                                       oferta.destino, 
-                                       oferta.data)
+                self.notificar_pedido(usr_o["referencia"], pedido)
+                self.notificar_oferta(usr_p["referencia"], oferta)
 
 
     def procurar_ofertas(self, pedido):
         usr_p = self.get_usuario(pedido.nome)
         usr_o = None
+        global caronas_oferecidas
 
-        for oferta in self.caronas_oferecidas:
+        for oferta in caronas_oferecidas:
             if(oferta.origem == pedido.origem and
                oferta.destino == pedido.destino and
                oferta.data == pedido.data):
 
                 usr_o = self.get_usuario(oferta.nome)
+                self.notificar_oferta(usr_p["referencia"], oferta)
+                self.notificar_pedido(usr_o["referencia"], pedido)
 
-                usr_p.notificar_oferta(oferta.nome, 
-                                       oferta.telefone, 
-                                       oferta.origem, 
-                                       oferta.destino, 
-                                       oferta.data)
-
-                usr_o.notificar_pedido(pedido.nome, 
-                                       pedido.telefone, 
-                                       pedido.origem, 
-                                       pedido.destino, 
-                                       pedido.data)
 
     def get_usuario(self, nome):
-        for usuario in self.usuarios:
-            if usuario.nome == nome:
+        global usuarios
+        for usuario in usuarios:
+            if usuario["nome"] == nome:
                 return usuario
         
         return None
+
+    
+    @Pyro4.expose
+    @Pyro4.oneway
+    def notificar_pedido(self, usuario, requisicao):
+        usuario.notificar_pedido(requisicao.nome, 
+                                 requisicao.telefone, 
+                                 requisicao.origem, 
+                                 requisicao.destino, 
+                                 requisicao.data)
+
+
+    @Pyro4.expose
+    @Pyro4.oneway
+    def notificar_oferta(self, usuario, requisicao):
+        usuario.notificar_oferta(requisicao.nome, 
+                                 requisicao.telefone, 
+                                 requisicao.origem, 
+                                 requisicao.destino, 
+                                 requisicao.data)
+
+
+def main():
+    Pyro4.Daemon.serveSimple({Servidor: "servidor"})
+
+
+if __name__ == "__main__":
+    main()
