@@ -15,6 +15,7 @@ Cliente:
     - Mensagem de notificação
 
 Servidor:  
+    - cadastrar usuário
     - registrar interesse (carona)
     - registrar interesse (passageiros)
     - notificar
