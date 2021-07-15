@@ -1,5 +1,8 @@
 from requisicao import Requisicao
 import Pyro4
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15 as pk
 
 usuarios = []
 caronas_pedidas = []
@@ -14,8 +17,10 @@ class Servidor(object):
         
 
     @Pyro4.expose
-    def cadastrar_usuario(self, nome, usuario):
-        novo = {"nome":nome, "referencia":usuario}
+    def cadastrar_usuario(self, nome, usuario, chave):
+        chave_publica = bytes(chave, 'utf-8')
+        chave_publica = RSA.import_key(chave_publica)
+        novo = {"nome":nome, "referencia":usuario, "chave":chave_publica}
         global usuarios
         usuarios.append(novo)
         print("[SUCESSO] Novo usuário registrado! Nome: {0}".format(nome))

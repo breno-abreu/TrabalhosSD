@@ -1,5 +1,8 @@
-from servidor import Servidor
 import Pyro4
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto import Random
+from Crypto.Signature import pkcs1_15 as pk
 
 class Usuario(object):
     def __init__(self):
@@ -7,6 +10,15 @@ class Usuario(object):
         self.telefone = None
         self.ids_pedidos = []
         self.ids_ofertas = []
+
+        self.par_chaves = None
+        self.chave_publica = None
+        self.gerar_chaves()
+
+    def gerar_chaves(self):
+        random_seed = Random.new().read
+        self.par_chaves = RSA.generate(1024, random_seed)
+        self.chave_publica = self.par_chaves.publickey()
 
 
     def get_variavel(self, nome):
@@ -24,12 +36,13 @@ class Usuario(object):
 
 
     def cadastrar_usuario(self):
-
         self.nome = self.get_variavel("Nome")
         self.telefone = self.get_variavel("Telefone")
+        chave = self.chave_publica.export_key()
+        chave = chave.decode('utf-8')
         
         with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
-            servidor.cadastrar_usuario(self.nome, self)
+            servidor.cadastrar_usuario(self.nome, self, chave)
 
 
     def requisitar_carona(self):
