@@ -14,6 +14,17 @@ class Servidor(object):
     def __init__(self):
         #criar nova classse para essas iunformações, guardá-las fora do servidor
         self.j = 3
+
+    
+    def validar_assinatura(self, nome, mensagem, assinatura):
+        mensagem_hash = SHA256.new(mensagem.encode())
+        usuario = self.get_usuario(nome)
+        assinatura = bytes(assinatura, 'latin1')
+        try:
+            pk.new(usuario["chave"]).verify(mensagem_hash, assinatura)
+            return True
+        except:
+            return False
         
 
     @Pyro4.expose
@@ -27,27 +38,44 @@ class Servidor(object):
 
 
     @Pyro4.expose
-    def registrar_interesse_pedido(self, nome, telefone, origem, destino, data):
+    def registrar_interesse_pedido(self, mensagem, assinatura):
         global cont
         global caronas_pedidas
-        cont += 1
-        requisicao = Requisicao(cont, nome, telefone, origem, destino, data)
-        caronas_pedidas.append(requisicao)
-        self.procurar_ofertas(requisicao)
-        print("[SUCESSO] Novo registro de interesse de pedido criado!")
-        return cont
+
+        variaveis = mensagem.split(',')
+
+        if(self.validar_assinatura(variaveis[0], mensagem, assinatura)):
+            cont += 1
+            requisicao = Requisicao(cont, variaveis[0], variaveis[1], 
+                                    variaveis[2], variaveis[3], variaveis[4])
+            caronas_pedidas.append(requisicao)
+            self.procurar_ofertas(requisicao)
+            print("[SUCESSO] Novo registro de interesse de pedido criado!")
+            return cont
+        
+        else:
+            print("[ERRO] Assinatura digital é inválida!")
 
 
     @Pyro4.expose
-    def registrar_interesse_oferta(self, nome, telefone, origem, destino, data, n_passageiros):
+    def registrar_interesse_oferta(self, mensagem, assinatura):
         global cont
         global caronas_oferecidas
-        cont += 1
-        requisicao = Requisicao(cont, nome, telefone, origem, destino, data, n_passageiros)
-        caronas_oferecidas.append(requisicao)
-        self.procurar_pedidos(requisicao)
-        print("[SUCESSO] Novo registro de interesse de oferta criado!")
-        return cont
+
+        variaveis = mensagem.split(',')
+
+        if(self.validar_assinatura(variaveis[0], mensagem, assinatura)):
+            cont += 1
+            requisicao = Requisicao(cont, variaveis[0], variaveis[1], variaveis[2], 
+                                    variaveis[3], variaveis[4], variaveis[5])
+            caronas_oferecidas.append(requisicao)
+            self.procurar_pedidos(requisicao)
+            print("[SUCESSO] Novo registro de interesse de oferta criado!")
+            return cont
+        
+        else:
+            print("[ERRO] Assinatura digital é inválida!")
+
 
 
     @Pyro4.expose

@@ -20,6 +20,12 @@ class Usuario(object):
         self.par_chaves = RSA.generate(1024, random_seed)
         self.chave_publica = self.par_chaves.publickey()
 
+    
+    def get_assinatura(self, mensagem):
+        mensagem_hash = SHA256.new(mensagem.encode())
+        assinatura = pk.new(self.par_chaves).sign(mensagem_hash)
+        return assinatura
+
 
     def get_variavel(self, nome):
         variavel = ''
@@ -66,16 +72,15 @@ class Usuario(object):
         destino = self.get_variavel("Destino")
         data = self.get_variavel("Data")
 
+        mensagem = self.nome + ',' + self.telefone + ',' + origem
+        mensagem += ',' + destino + ',' + data
+        assinatura = self.get_assinatura(mensagem)
+        assinatura = assinatura.decode('latin1')
         
         with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
-            id_req = servidor.registrar_interesse_pedido(self.nome, 
-                                                         self.telefone, 
-                                                         origem, 
-                                                         destino, 
-                                                         data)
+            id_req = servidor.registrar_interesse_pedido(mensagem, assinatura)
 
         self.ids_pedidos.append(id_req)
-        print(id_req)
 
     
     def registrar_oferta(self):
@@ -84,13 +89,13 @@ class Usuario(object):
         data = self.get_variavel("Data")
         n_passageiros = self.get_variavel("Número de Passageiros")
 
+        mensagem = self.nome + ',' + self.telefone + ',' + origem
+        mensagem += ',' + destino + ',' + data + ',' + n_passageiros
+        assinatura = self.get_assinatura(mensagem)
+        assinatura = assinatura.decode('latin1')
+
         with Pyro4.core.Proxy("PYRONAME:servidor") as servidor:
-            id_req = servidor.registrar_interesse_oferta(self.nome, 
-                                                         self.telefone, 
-                                                         origem, 
-                                                         destino, 
-                                                         data,
-                                                         n_passageiros)
+            id_req = servidor.registrar_interesse_oferta(mensagem, assinatura)
 
         self.ids_ofertas.append(id_req)
         

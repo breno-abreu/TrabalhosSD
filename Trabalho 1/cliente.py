@@ -15,9 +15,9 @@ def main():
     t.start()
 
     usuario.cadastrar_usuario()
-    """usuario2.cadastrar_usuario()
+    usuario2.cadastrar_usuario()
     usuario.requisitar_carona()
-    usuario2.requisitar_carona()"""
+    usuario2.requisitar_carona()
     
 
 
