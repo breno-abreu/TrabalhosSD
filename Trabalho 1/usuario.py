@@ -159,7 +159,7 @@ class Usuario(object):
 
         except Exception as ex:
             print("[ERRO] Não foi possível se conectar ao servidor")
-            print("[EXCEPTION] " + str(ex)) 
+            print("[EXCEPTION] " + str(ex))
         
 
     def cancelar_carona(self):
@@ -237,9 +237,9 @@ class Usuario(object):
             um usuário que realizou um pedido a respeito de uma oferta
             mostrando as informações do usuário ofertante """
 
-        print("[NOTIFICAÇÃO] O usuário {0} está interessado em te oferecer carona!".format(nome))
-        print("\tInformações:\n\tTelefone do usuário: {0}\n\tOrigem: {1}" + 
-              "\n\tDestino: {2}\n\tData: {3}".format(telefone, origem, destino, data))
+        print("\n[NOTIFICAÇÃO] O usuário {0} está interessado em te oferecer carona!".format(nome))
+        print("\tInformações:\n\tNome do usuário: {0}\n\tTelefone: {1}".format(nome, telefone))
+        print("\tOrigem: {0}\n\tDestino: {1}\n\tData: {2}".format(origem, destino, data))
 
 
     @Pyro4.expose
@@ -249,6 +249,6 @@ class Usuario(object):
             um usuário que realizou uma oferta a respeito de um pedido
             mostrando as informações do usuário pedinte """
 
-        print("[NOTIFICAÇÃO] O usuário {0} está interessado em sua carona!".format(nome))
-        print("\tInformações:\n\tTelefone do usuário: {0}\n\tOrigem: {1}" + 
-              "\n\tDestino: {2}\n\tData: {3}".format(telefone, origem, destino, data))
+        print("\n[NOTIFICAÇÃO] O usuário {0} está interessado em sua carona!".format(nome))
+        print("\tInformações:\n\tNome do usuário: {0}\n\tTelefone: {1}".format(nome, telefone))
+        print("\tOrigem: {0}\n\tDestino: {1}\n\tData: {2}".format(origem, destino, data))

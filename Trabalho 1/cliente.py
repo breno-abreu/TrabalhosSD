@@ -1,6 +1,7 @@
 import Pyro4
 from usuario import Usuario
 import threading
+import os
 
 def main():
     """ Executa o menu de escolhas para um usuário """
@@ -37,9 +38,12 @@ def main():
                 usuario.mostrar_ids()
             else:
                 print("[ERRO] Opção inválida")
+            
+            input("[PRESSIONE ENTER]")
+            os.system('clear')
 
     except KeyboardInterrupt:
-        print("[SAINDO] Desligando programa!")
+        print("\n[SAINDO] Desligando programa!")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 from requisicao import Requisicao
+import threading
 
 # Importa a classe Pyro4 para possibilitar o acesso a objetos remotos
 import Pyro4
@@ -62,6 +63,7 @@ class Servidor(object):
         global usuarios
         usuarios.append(novo)
         print("[SUCESSO] Novo usuário registrado! Nome: {0}".format(nome))
+        print("[INFO] {0} usuários cadastrados".format(len(usuarios)))
 
 
     @Pyro4.expose
@@ -182,8 +184,12 @@ class Servidor(object):
 
                 # Notifica o usuário que realizou a oferta e o usuário que
                 # realizou o pedido sobre as informações um do outro
-                self.notificar_pedido(usr_o["referencia"], pedido)
-                self.notificar_oferta(usr_p["referencia"], oferta)
+                if(usr_o["nome"] != usr_p["nome"]):
+                    to = threading.Thread(self.notificar_pedido(usr_o["referencia"], pedido))
+                    tp = threading.Thread(self.notificar_oferta(usr_p["referencia"], oferta))
+
+                    to.start()
+                    tp.start()
 
 
     def procurar_ofertas(self, pedido):
@@ -205,8 +211,12 @@ class Servidor(object):
 
                 # Notifica o usuário que realizou a oferta e o usuário que
                 # realizou o pedido sobre as informações um do outro
-                self.notificar_oferta(usr_p["referencia"], oferta)
-                self.notificar_pedido(usr_o["referencia"], pedido)
+                if(usr_o["nome"] != usr_p["nome"]):
+                    to = threading.Thread(self.notificar_pedido(usr_o["referencia"], pedido))
+                    tp = threading.Thread(self.notificar_oferta(usr_p["referencia"], oferta))
+
+                    to.start()
+                    tp.start()
 
 
     def get_usuario(self, nome):
@@ -219,7 +229,6 @@ class Servidor(object):
         
         return None
 
-    
     @Pyro4.expose
     @Pyro4.oneway
     def notificar_pedido(self, usuario, requisicao):
